@@ -39,14 +39,18 @@ contract GasSnapshotTest is Test, GasSnapshot {
     function testSstoreClosure() public {
         snap("sstoreClosure", simpleOperations.manySstore);
 
-        string memory value = vm.readLine(".forge-snapshots/sstoreClosure.snap");
+        string memory value = vm.readLine(
+            ".forge-snapshots/sstoreClosure.snap"
+        );
         assertEq(value, "53894");
     }
 
     function testInternalClosure() public {
         snap("internalClosure", add);
 
-        string memory value = vm.readLine(".forge-snapshots/internalClosure.snap");
+        string memory value = vm.readLine(
+            ".forge-snapshots/internalClosure.snap"
+        );
         assertEq(value, "19177");
     }
 
@@ -106,7 +110,9 @@ contract GasSnapshotTest is Test, GasSnapshot {
     function testSnapshotCheckSizeFail() public {
         setCheckMode(true);
         SimpleOperations sizeTarget = new SimpleOperations();
-        vm.expectRevert(abi.encodeWithSelector(GasSnapshot.GasMismatch.selector, 1, 303));
+        vm.expectRevert(
+            abi.encodeWithSelector(GasSnapshot.GasMismatch.selector, 1, 303)
+        );
         snapSize("checkSizeFail", address(sizeTarget));
     }
 
@@ -123,7 +129,26 @@ contract GasSnapshotTest is Test, GasSnapshot {
         // preloaded with the wrong value
         snapStart("checkManySstore");
         simpleOperations.manySstore();
-        vm.expectRevert(abi.encodeWithSelector(GasSnapshot.GasMismatch.selector, 1, 59561));
+        vm.expectRevert(
+            abi.encodeWithSelector(GasSnapshot.GasMismatch.selector, 1, 59594)
+        );
+        snapEnd();
+    }
+
+    function testCheckWithTolerance() public {
+        setCheckMode(true);
+        snapStart("checkTolerance");
+        simpleOperations.add();
+        snapEnd();
+    }
+
+    function testCheckWithToleranceFails() public {
+        setCheckMode(true);
+        snapStart("checkToleranceFail");
+        simpleOperations.add();
+        vm.expectRevert(
+            abi.encodeWithSelector(GasSnapshot.GasMismatch.selector, 8756, 8746)
+        );
         snapEnd();
     }
 
