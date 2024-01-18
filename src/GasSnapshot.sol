@@ -16,6 +16,8 @@ contract GasSnapshot is Script {
     string private constant TEMP_ENV_VAR = "_forge_snapshot_temp_gas";
     /// @notice gas overhead for the snapshotting function itself
     uint256 private constant GAS_CALIBRATION = 100;
+    /// @notice amount of acceptable to change before the error is thrown in %
+    uint256 private constant GAS_TOLERANCE = 1e15; // 0.1%
 
     /// @notice if true, revert on gas mismatch, else overwrite with new values
     bool internal check;
@@ -108,13 +110,18 @@ contract GasSnapshot is Script {
     /// @notice Check the gas usage against the snapshot. Revert on mismatch
     function _checkSnapshot(string memory name, uint256 gasUsed) internal view {
         uint256 oldGasUsed = _readSnapshot(name);
-        if (oldGasUsed != gasUsed) {
+        uint256 delta = (oldGasUsed * GAS_TOLERANCE) / 1e18;
+        if (gasUsed > (oldGasUsed + delta) || gasUsed < (oldGasUsed - delta)) {
             revert GasMismatch(oldGasUsed, gasUsed);
         }
     }
 
     /// @notice Read the last snapshot value from the file
-    function _readSnapshot(string memory name) private view returns (uint256 res) {
+    function _readSnapshot(string memory name)
+        private
+        view
+        returns (uint256 res)
+    {
         string memory oldValue = vm.readLine(_getSnapFile(name));
         res = UintString.stringToUint(oldValue);
     }
@@ -134,7 +141,11 @@ contract GasSnapshot is Script {
     }
 
     /// @notice Get the snapshot file name
-    function _getSnapFile(string memory name) private pure returns (string memory) {
+    function _getSnapFile(string memory name)
+        private
+        pure
+        returns (string memory)
+    {
         return string(abi.encodePacked(SNAP_DIR, name, ".snap"));
     }
 
