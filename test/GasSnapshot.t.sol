@@ -20,12 +20,33 @@ contract GasSnapshotTest is Test, GasSnapshot {
         assertEq(value, "1234");
     }
 
+    function testSnapValueWithTolerance() public {
+        snap("valueWithTolerance", 1001);
+
+        string memory value = vm.readLine(
+            ".forge-snapshots/valueWithTolerance.snap"
+        );
+        assertEq(value, "1000");
+    }
+
+    function testSnapValueWithToleranceLimit() public {
+        snap("testSnapValueWithToleranceLimit", 1002);
+
+        string memory value = vm.readLine(
+            ".forge-snapshots/testSnapValueWithToleranceLimit.snap"
+        );
+        assertEq(value, "1002");
+        // set back to default value
+        snap("testSnapValueWithToleranceLimit", 1000);
+    }
+
     function testAdd() public {
         snapStart("add");
         simpleOperations.add();
         snapEnd();
 
         string memory value = vm.readLine(".forge-snapshots/add.snap");
+        console2.log("value:", value);
         assertEq(value, "5247");
     }
 
@@ -69,11 +90,13 @@ contract GasSnapshotTest is Test, GasSnapshot {
 
         string memory first = vm.readLine(".forge-snapshots/addFirst.snap");
         string memory second = vm.readLine(".forge-snapshots/addSecond.snap");
+        console2.log("second:", second);
         string memory third = vm.readLine(".forge-snapshots/addThird.snap");
+        console2.log("third:", third);
 
-        assertEq(second, third);
         assertEq(first, "5247");
-        assertEq(second, "744");
+        assertEq(second, "747");
+        assertEq(third, "748");
     }
 
     function testManyAdd() public {

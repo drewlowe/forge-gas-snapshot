@@ -108,7 +108,7 @@ contract GasSnapshot is Script {
     }
 
     /// @notice Check the gas usage against the snapshot. Revert on mismatch
-    function _checkSnapshot(string memory name, uint256 gasUsed) internal view {
+    function _checkSnapshot(string memory name, uint256 gasUsed) internal {
         uint256 oldGasUsed = _readSnapshot(name);
         uint256 delta = (oldGasUsed * GAS_TOLERANCE) / 1e18;
         if (gasUsed > (oldGasUsed + delta) || gasUsed < (oldGasUsed - delta)) {
@@ -117,18 +117,33 @@ contract GasSnapshot is Script {
     }
 
     /// @notice Read the last snapshot value from the file
-    function _readSnapshot(string memory name)
-        private
-        view
-        returns (uint256 res)
-    {
+    function _readSnapshot(string memory name) public returns (uint256 res) {
         string memory oldValue = vm.readLine(_getSnapFile(name));
+        // To allow the next reader to fetch fist line
+        vm.closeFile(_getSnapFile(name));
         res = UintString.stringToUint(oldValue);
     }
 
     /// @notice Write the new snapshot value to file
     function _writeSnapshot(string memory name, uint256 gasUsed) private {
+        console2.log("name:", name);
+        // write only if change > tolerance
+        try this._readSnapshot(name) returns (uint256 oldGasUsed) {
+            console2.log("oldGasUsed:", oldGasUsed);
+            console2.log("gasUsed:", gasUsed);
+            uint256 delta = (oldGasUsed * GAS_TOLERANCE) / 1e18;
+            if (
+                gasUsed > (oldGasUsed + delta) || gasUsed < (oldGasUsed - delta)
+            ) {
+                vm.writeFile(_getSnapFile(name), vm.toString(gasUsed));
+                vm.closeFile(_getSnapFile(name));
+            }
+            return;
+        } catch (
+            bytes memory /* lowLevelData */
+        ) {}
         vm.writeFile(_getSnapFile(name), vm.toString(gasUsed));
+        vm.closeFile(_getSnapFile(name));
     }
 
     /// @notice Make the directory for snapshots
