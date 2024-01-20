@@ -126,11 +126,8 @@ contract GasSnapshot is Script {
 
     /// @notice Write the new snapshot value to file
     function _writeSnapshot(string memory name, uint256 gasUsed) private {
-        console2.log("name:", name);
         // write only if change > tolerance
         try this._readSnapshot(name) returns (uint256 oldGasUsed) {
-            console2.log("oldGasUsed:", oldGasUsed);
-            console2.log("gasUsed:", gasUsed);
             uint256 delta = (oldGasUsed * GAS_TOLERANCE) / 1e18;
             if (
                 gasUsed > (oldGasUsed + delta) || gasUsed < (oldGasUsed - delta)
