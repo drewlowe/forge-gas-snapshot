@@ -1,5 +1,5 @@
 {
-  "name": "ylv-io/forge-gas-snapshot",
+  "name": "forge-gas-snapshot",
   "files": [
     "src/",
     "LICENSE"
